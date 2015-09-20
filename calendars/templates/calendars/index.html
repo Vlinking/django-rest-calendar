@@ -3,8 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <title></title>
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/common.css" type="text/css">
 </head>
 <body>
     Mayan Calendar 2015
+
+
+
+    <div class="little_calendar">
+        <div>{{ month }} {{ year }}</div>
+        <div class="day">P</div>
+        <div class="day">W</div>
+        <div class="day">Ś</div>
+        <div class="day">C</div>
+        <div class="day">P</div>
+        <div class="day">S</div>
+        <div class="day">N</div>
+        {% for week in current_month %}
+            <div class="week">
+            {% for day in week %}
+                <div class="day">
+                {% if day.0 != 0 %}
+                    {{ day.0 }}
+                {% else %}
+                    &nbsp;
+                {% endif %}
+                </div>
+            {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+
+
+
+    <div>Dzień</div>
+    <div>Tydzień</div>
+    <div>Miesiąc</div>
+
+
+
 </body>
 </html>

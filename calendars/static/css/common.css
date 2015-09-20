@@ -1,0 +1,11 @@
+
+
+.little_calendar .week {
+    clear: both;
+}
+
+.little_calendar .day {
+    width: 20px;
+    float: left;
+    text-align: center;
+}
