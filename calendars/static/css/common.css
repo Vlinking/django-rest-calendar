@@ -9,3 +9,26 @@
     float: left;
     text-align: center;
 }
+
+.little_calendar .today {
+    border: 1px solid red;
+}
+
+.button {
+    width: 20px;
+    float: left;
+    text-align: center;
+    cursor: pointer;
+}
+
+.larrow {
+    border-left: 1px solid gray;
+    border-top: 1px solid gray;
+    border-bottom: 1px solid gray;
+}
+
+.rarrow {
+    border-right: 1px solid gray;
+    border-top: 1px solid gray;
+    border-bottom: 1px solid gray;
+}

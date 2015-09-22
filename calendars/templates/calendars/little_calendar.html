@@ -1,0 +1,23 @@
+    <div class="little_calendar">
+        <div>{{ month }} {{ year }}</div>
+        <div class="day">P</div>
+        <div class="day">W</div>
+        <div class="day">Ś</div>
+        <div class="day">C</div>
+        <div class="day">P</div>
+        <div class="day">S</div>
+        <div class="day">N</div>
+        {% for week in monthly_days %}
+            <div class="week">
+            {% for day in week %}
+                <div class="day{% if day.0 == today %} today{% endif %}">
+                {% if day.0 != 0 %}
+                    {{ day.0 }}
+                {% else %}
+                    &nbsp;
+                {% endif %}
+                </div>
+            {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
