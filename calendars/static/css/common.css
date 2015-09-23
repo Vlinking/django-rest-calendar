@@ -1,4 +1,11 @@
 
+.little_calendar {
+    float: left;
+}
+
+.large_calendar {
+    margin-bottom: 20px;
+}
 
 .little_calendar .week {
     clear: both;
@@ -10,8 +17,31 @@
     text-align: center;
 }
 
-.little_calendar .today {
+.large_calendar .day {
+    width: 120px;
+    height: 150px;
+    border: 1px dotted gray;
+    float: left;
+}
+
+.large_calendar .title {
+    width: 122px;
+    height: 32px;
+    float: left;
+}
+
+.large_calendar .title:first-child,
+.large_calendar .day:first-child {
+    margin-left: 20px;
+}
+
+.little_calendar .today,
+.large_calendar .today {
     border: 1px solid red;
+}
+
+.large_calendar .day.bold {
+    background-color: #ddd;
 }
 
 .button {
@@ -31,4 +61,45 @@
     border-right: 1px solid gray;
     border-top: 1px solid gray;
     border-bottom: 1px solid gray;
+}
+
+.left {
+    width: 200px;
+    float: left;
+    border: 1px solid gray;
+    padding: 8px;
+    margin-right: 8px;
+}
+
+.left .nav {
+    margin-left: 150px;
+}
+
+.upper {
+    width: 600px;
+    margin-left: 230px;
+}
+
+.upper .view {
+    float: left;
+    border: 1px solid gray;
+    margin: 2px;
+    padding: 4px 12px;
+    cursor: pointer;
+}
+
+.upper .view.selected {
+    color: white;
+    background-color: gray;
+}
+
+.big_content {
+    width: 900px;
+    float: left;
+    border: 1px solid gray;
+    min-height: 600px;
+}
+
+.clear {
+    clear: both;
 }

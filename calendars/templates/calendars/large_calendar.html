@@ -1,0 +1,22 @@
+    <div class="large_calendar">
+        <div class="title">pon.</div>
+        <div class="title">wt.</div>
+        <div class="title">śr.</div>
+        <div class="title">czw.</div>
+        <div class="title">pt.</div>
+        <div class="title">sob.</div>
+        <div class="title">niedz.</div>
+        {% for week in monthly_days %}
+            <div class="week">
+            {% for day in week %}
+                <div class="day{% if day.0 == today %} today{% endif %}{% if day.0 != 0 %} bold{% endif %}">
+                {% if day.0 != 0 %}
+                    {{ day.0 }}
+                {% else %}
+                    &nbsp;
+                {% endif %}
+                </div>
+            {% endfor %}
+            </div>
+        {% endfor %}
+    </div>

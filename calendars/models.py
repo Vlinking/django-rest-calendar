@@ -6,7 +6,12 @@ class Calendar(models.Model):
     owner = models.ForeignKey(User)
     name = models.CharField(max_length=50)
     # will be stored in RGB
+    #or better, a custom field can be done
     color = models.CharField(max_length=6)
+
+    def __unicode__(self):
+        return self.name
+
 
 
 class Event(models.Model):

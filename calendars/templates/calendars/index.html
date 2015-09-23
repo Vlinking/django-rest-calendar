@@ -10,22 +10,40 @@ Mayan Calendar 2015
     var today = {{ today }};
 </script>
 
-<div class="left">
-    <div class="button larrow">
-        <
+
+<div class="upper">
+    <div id="daily_view" class="view">
+        Dzień
     </div>
-    <div class="button rarrow">
-        >
+    <div id="weekly_view" class="view">
+        Tydzień
+    </div>
+    <div id="monthly_view" class="view">
+        Miesiąc
+    </div>
+    <div class="clear">&nbsp;</div>
+</div>
+
+
+<div class="left">
+    <div class="nav">
+        <div class="button larrow">
+            <
+        </div>
+        <div class="button rarrow">
+            >
+        </div>
     </div>
     <div id="little_calendar">
         &nbsp;
     </div>
-
-
 </div>
 
+<div class="big_content">
+    <div id="large_calendar">
 
 
-
+    </div>
+</div>
 
 {% endblock %}
