@@ -4,12 +4,13 @@
 
 Mayan Calendar 2015
 
+{% if username %}
+
 <script type="text/javascript">
     var current_year = {{ current_year }};
     var current_month = {{ current_month }};
     var today = {{ today }};
 </script>
-
 
 <div class="upper">
     <div id="daily_view" class="view">
@@ -21,9 +22,13 @@ Mayan Calendar 2015
     <div id="monthly_view" class="view">
         Miesiąc
     </div>
+    <div class="user_bar">
+        Użytkownik <strong>{{ username }}</strong>&nbsp;&nbsp;|&nbsp;&nbsp;
+        <a href="/accounts/logout">wyloguj</a>
+    </div>
+    <div></div>
     <div class="clear">&nbsp;</div>
 </div>
-
 
 <div class="left">
     <div class="nav">
@@ -41,9 +46,11 @@ Mayan Calendar 2015
 
 <div class="big_content">
     <div id="large_calendar">
-
-
     </div>
 </div>
+
+{% else %}
+<div>Aby korzystać z tego kalendarza musisz się <a href="/accounts/login">zalogować</a>.</div>
+{% endif %}
 
 {% endblock %}
