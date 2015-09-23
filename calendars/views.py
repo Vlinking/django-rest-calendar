@@ -68,6 +68,20 @@ class CalendarMonthlyDetailedView(CalendarMonthlyView):
     template_name = 'calendars/large_calendar.html'
 
 
+class CalendarDailyDetailedView(AjaxRequiredMixin, TemplateView):
+    """
+    The view of a day, sliced into hours
+    """
+    template_name = 'calendars/large_day.html'
+
+    def get(self, request, *args, **kwargs):
+        data = {
+            'hours': [x for x in range(0, 24)]
+        }
+        return render_to_response(self.template_name, data,
+            context_instance=RequestContext(request))
+
+
 class IndexView(TemplateView):
     """
     Index view for the main calendars app page

@@ -26,8 +26,8 @@ function load_month_detailed(year, month) {
 }
 
 function load_day_detailed(year, month) {
-    $.get('/calendars/api/get_day_detailed/'+ year + '/' + month + '/' + today, {}, function(data) {
-           $('#day_detailed').html(data);
+    $.get('/calendars/api/get_calendar_daily_detailed/'+ year + '/' + month + '/' + today, {}, function(data) {
+           $('#large_calendar').html(data);
        });
 }
 
@@ -51,6 +51,7 @@ $(document).ready(function() {
 
    $('#daily_view').click(function() {
         select_view_mode($(this));
+        load_day_detailed(current_year, current_month, today);
    });
 
    $('#weekly_view').click(function() {

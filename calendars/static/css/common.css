@@ -44,6 +44,16 @@
     background-color: #ddd;
 }
 
+.large_day .hour {
+    width: 884px;
+}
+
+.large_day div {
+    padding: 2px 8px;
+    border-bottom: 1px dotted gray;
+    height: 32px;
+}
+
 .button {
     width: 20px;
     float: left;
@@ -102,4 +112,10 @@
 
 .clear {
     clear: both;
+}
+
+.user_bar {
+    float: left;
+    margin-top: 6px;
+    margin-left: 8px;
 }
