@@ -128,6 +128,10 @@ class CalendarMonthlyDetailedView(CalendarMonthlyView):
                             start__lte=datetime(year, month, day[0], 23, 59),
                             end__gte=datetime(year, month, day[0], 0, 0),
                     )
+                    calendars_str = request.GET.getlist('calendars[]')
+                    calendars = [int(x) for x in calendars_str]
+                    if calendars:
+                        events = events.filter(calendar__in=calendars,)
                 else:
                     events = []
                 week_days.append((day[0], day[1], events))

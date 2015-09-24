@@ -20,7 +20,7 @@ function load_month(year, month) {
 }
 
 function load_month_detailed(year, month) {
-    $.get('/calendars/api/get_calendar_monthly_detailed/'+ year + '/' + month + '/' + today, {}, function(data) {
+    $.get('/calendars/api/get_calendar_monthly_detailed/'+ year + '/' + month + '/' + today, {'calendars': [1,2,3,4,5]}, function(data) {
            $('#large_calendar').html(data);
        });
 }
@@ -34,7 +34,7 @@ function load_day_detailed(year, month) {
 function load_user_calendars() {
     $.get('/calendars/api/user/calendars/', {}, function(data) {
         data.forEach(function(entry) {
-            var html = "<div id='calendar_"+entry['pk']+"' class='user_calendar'>";
+            var html = "<div id='calendar_"+entry['id']+"' class='user_calendar'>";
             html += "<div class='calendar_icon' style='background-color: #"+entry['color']+" ;'>&nbsp;</div><div>"+entry['name']+"</div></div>";
             $(html).appendTo( "#user_calendars");
         });
