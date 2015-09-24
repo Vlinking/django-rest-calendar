@@ -1,6 +1,9 @@
 
 .little_calendar {
     float: left;
+    margin-top: 8px;
+    border: 1px solid black;
+    padding: 8px;
 }
 
 .large_calendar {
@@ -76,13 +79,18 @@
 .left {
     width: 200px;
     float: left;
-    border: 1px solid gray;
     padding: 8px;
     margin-right: 8px;
 }
 
 .left .nav {
-    margin-left: 150px;
+    margin-left: 118px;
+}
+
+.calendar_list {
+    float: left;
+    width: 200px;
+    margin-top: 8px;
 }
 
 .upper {
@@ -118,4 +126,12 @@
     float: left;
     margin-top: 6px;
     margin-left: 8px;
+}
+
+.calendar_icon {
+    float: left;
+    height: 12px;
+    width: 12px;
+    margin-top: 5px;
+    margin-right: 8px;
 }

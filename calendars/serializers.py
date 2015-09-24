@@ -10,12 +10,24 @@ class CalendarSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class CalendarOwnedSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+
     class Meta:
         model = Calendar
-        fields = ('name', 'color')
+        fields = ('id', 'name', 'color')
 
 
 class EventSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+
     class Meta:
         model = Event
-        fields = ('title', 'description', 'timezone', 'type', 'start', 'end')
+        fields = ('id', 'calendar', 'title', 'description', 'timezone', 'type', 'start', 'end')
+
+
+class EventOwnedSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Event
+        fields = ('id', 'calendar', 'title', 'description', 'timezone', 'type', 'start', 'end')

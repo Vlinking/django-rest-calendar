@@ -7,8 +7,8 @@ from django.views.generic import TemplateView
 
 from rest_framework import viewsets, permissions, filters
 
-from filters import IsOwnerFilterBackend
-from serializers import CalendarSerializer, EventSerializer, CalendarOwnedSerializer
+from filters import IsOwnerFilterBackend, IsEventCalendarOwnerFilterBackend
+from serializers import CalendarSerializer, EventSerializer, CalendarOwnedSerializer, EventOwnedSerializer
 from calendars import models
 
 
@@ -74,6 +74,15 @@ class CalendarOwnedViewSet(CalendarAdminViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+
+class EventOwnedViewSet(EventAdminViewSet):
+    """
+    API view for displaying only events that are the current user's
+    """
+    serializer_class = EventOwnedSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    filter_backends = (IsEventCalendarOwnerFilterBackend,)
 
 
 class AjaxRequiredMixin(object):

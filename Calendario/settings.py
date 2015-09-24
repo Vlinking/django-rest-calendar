@@ -119,3 +119,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     ]
 }
+
+DATETIME_INPUT_FORMATS = [
+    '%Y-%m-%d %H:%M',
+]

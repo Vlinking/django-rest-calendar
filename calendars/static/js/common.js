@@ -31,6 +31,16 @@ function load_day_detailed(year, month) {
        });
 }
 
+function load_user_calendars() {
+    $.get('/calendars/api/user/calendars/', {}, function(data) {
+        data.forEach(function(entry) {
+            var html = "<div id='calendar_"+entry['pk']+"' class='user_calendar'>";
+            html += "<div class='calendar_icon' style='background-color: #"+entry['color']+" ;'>&nbsp;</div><div>"+entry['name']+"</div></div>";
+            $(html).appendTo( "#user_calendars");
+        });
+    });
+}
+
 function select_view_mode(mode) {
     $('.upper .view').each(function() {
         $(this).removeClass('selected');
@@ -65,4 +75,5 @@ $(document).ready(function() {
 
    // load initial month
    load_month(current_year, current_month, today);
+   load_user_calendars();
 });

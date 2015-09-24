@@ -1,3 +1,4 @@
+import datetime
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -14,12 +15,13 @@ class Calendar(models.Model):
 
 
 class Event(models.Model):
+    calendar = models.ForeignKey(Calendar)
     title = models.CharField(max_length=50)
     description = models.TextField()
     timezone = models.CharField(max_length=50)
     type = models.CharField(max_length=10)
-    start = models.TimeField()
-    end = models.TimeField()
+    start = models.DateTimeField(default=datetime.datetime.now)
+    end = models.DateTimeField(default=datetime.datetime.now)
 
     def __unicode__(self):
         return self.title
