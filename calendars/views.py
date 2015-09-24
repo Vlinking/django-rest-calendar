@@ -29,6 +29,16 @@ MONTHS = [
     'Grudzień'
 ]
 
+WEEKDAYS = [
+    'Poniedziałek',
+    'Wtorek',
+    'Środa',
+    'Czwartek',
+    'Piątek',
+    'Sobota',
+    'Niedziela'
+]
+
 
 def get_month_wireframe(year, month, day):
     """
@@ -98,7 +108,7 @@ class AjaxRequiredMixin(object):
                 context_instance=RequestContext(request))
 
 
-class CalendarMonthlyView(TemplateView):
+class CalendarMonthlyView(AjaxRequiredMixin, TemplateView):
     """
     The little calendar ajax view
     """
@@ -110,7 +120,16 @@ class CalendarMonthlyView(TemplateView):
             context_instance=RequestContext(request))
 
 
-class CalendarMonthlyDetailedView(CalendarMonthlyView):
+class DisplayEventsMixin(object):
+    def filter_calendars(self, request, events):
+        calendars_str = request.GET.getlist('calendars[]')
+        calendars = [int(x) for x in calendars_str]
+        if calendars:
+            events = events.filter(calendar__in=calendars,)
+        return events
+
+
+class CalendarMonthlyDetailedView(DisplayEventsMixin, CalendarMonthlyView):
     template_name = 'calendars/large_calendar.html'
 
     def get(self, request, *args, **kwargs):
@@ -128,10 +147,7 @@ class CalendarMonthlyDetailedView(CalendarMonthlyView):
                             start__lte=datetime(year, month, day[0], 23, 59),
                             end__gte=datetime(year, month, day[0], 0, 0),
                     )
-                    calendars_str = request.GET.getlist('calendars[]')
-                    calendars = [int(x) for x in calendars_str]
-                    if calendars:
-                        events = events.filter(calendar__in=calendars,)
+                    events = self.filter_calendars(request, events)
                 else:
                     events = []
                 week_days.append((day[0], day[1], events))
@@ -142,15 +158,31 @@ class CalendarMonthlyDetailedView(CalendarMonthlyView):
             context_instance=RequestContext(request))
 
 
-class CalendarDailyDetailedView(AjaxRequiredMixin, TemplateView):
+class CalendarDailyDetailedView(DisplayEventsMixin, AjaxRequiredMixin, TemplateView):
     """
     The view of a day, sliced into hours
     """
     template_name = 'calendars/large_day.html'
 
     def get(self, request, *args, **kwargs):
+        year = int(kwargs['year'])
+        month = int(kwargs['month'])
+        day = int(kwargs['day'])
+        hours = []
+        for hour in range(0, 24):
+            events = models.Event.objects.filter(
+                    calendar__owner=request.user,
+                    start__lte=datetime(year, month, day, hour, 0),
+                    end__gte=datetime(year, month, day, hour, 59),
+            )
+            events = self.filter_calendars(request, events)
+            hours.append((hour, events))
+
         data = {
-            'hours': [x for x in range(0, 24)]
+            'hours': hours,
+            'year': year,
+            'month': month,
+            'day': day
         }
         return render_to_response(self.template_name, data,
             context_instance=RequestContext(request))

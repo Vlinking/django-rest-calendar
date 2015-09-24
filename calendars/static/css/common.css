@@ -57,6 +57,12 @@
     height: 32px;
 }
 
+.header {
+    margin-left: 8px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
 .button {
     width: 20px;
     float: left;
