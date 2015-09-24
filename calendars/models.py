@@ -13,7 +13,6 @@ class Calendar(models.Model):
         return self.name
 
 
-
 class Event(models.Model):
     title = models.CharField(max_length=50)
     description = models.TextField()
@@ -22,4 +21,5 @@ class Event(models.Model):
     start = models.TimeField()
     end = models.TimeField()
 
-
+    def __unicode__(self):
+        return self.title

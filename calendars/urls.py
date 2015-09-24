@@ -1,9 +1,13 @@
-__author__ = 'Bartek'
+from django.conf.urls import url, include
 
-from django.conf.urls import url
+from rest_framework import routers
 
 from . import views
 
+router = routers.DefaultRouter()
+router.register(r'api/admin/calendars', views.CalendarAdminViewSet)
+router.register(r'api/admin/events', views.EventAdminViewSet)
+router.register(r'api/user/calendars', views.CalendarOwnedViewSet)
 
 urlpatterns = [
     # API
@@ -15,4 +19,5 @@ urlpatterns = [
         views.CalendarDailyDetailedView.as_view()),
     # regular views
     url(r'^$', views.IndexView.as_view(), name='index'),
+    url(r'^', include(router.urls)),
 ]

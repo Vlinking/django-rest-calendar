@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, render_to_response
-
+from django.shortcuts import render_to_response
 from calendar import Calendar
 from datetime import datetime
 from django.template import RequestContext
-from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
+
+from rest_framework import viewsets, permissions, filters
+
+from filters import IsOwnerFilterBackend
+from serializers import CalendarSerializer, EventSerializer, CalendarOwnedSerializer
+from calendars import models
+
 
 MONTHS = [
     '',
@@ -38,6 +42,38 @@ def get_month_wireframe(year, month, day):
         'month': MONTHS[month],
         'today': day
     }
+
+
+class CalendarAdminViewSet(viewsets.ModelViewSet):
+    """
+    Convenience API view for viewing all data for the admin
+    and all operations
+    """
+    queryset = models.Calendar.objects.all()
+    serializer_class = CalendarSerializer
+    permission_classes = (permissions.IsAdminUser,)
+
+
+class EventAdminViewSet(viewsets.ModelViewSet):
+    """
+    Convenience API view for viewing all data for the admin
+    and all operations
+    """
+    queryset = models.Event.objects.all()
+    serializer_class = EventSerializer
+    permission_classes = (permissions.IsAdminUser,)
+
+
+class CalendarOwnedViewSet(CalendarAdminViewSet):
+    """
+    API view for displaying only calendars that are the current user's
+    """
+    serializer_class = CalendarOwnedSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    filter_backends = (IsOwnerFilterBackend,)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 
 class AjaxRequiredMixin(object):
