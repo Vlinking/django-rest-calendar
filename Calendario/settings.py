@@ -120,6 +120,6 @@ REST_FRAMEWORK = {
     ]
 }
 
-DATETIME_INPUT_FORMATS = [
-    '%Y-%m-%d %H:%M',
-]
+# DATETIME_INPUT_FORMATS = [
+#     '%Y-%m-%d %H:%M',
+# ]

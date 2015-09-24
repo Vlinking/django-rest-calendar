@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.shortcuts import render_to_response
+from django.db.models import Q
 from calendar import Calendar
 from datetime import datetime
 from django.template import RequestContext
@@ -97,7 +98,7 @@ class AjaxRequiredMixin(object):
                 context_instance=RequestContext(request))
 
 
-class CalendarMonthlyView(AjaxRequiredMixin, TemplateView):
+class CalendarMonthlyView(TemplateView):
     """
     The little calendar ajax view
     """
@@ -111,6 +112,30 @@ class CalendarMonthlyView(AjaxRequiredMixin, TemplateView):
 
 class CalendarMonthlyDetailedView(CalendarMonthlyView):
     template_name = 'calendars/large_calendar.html'
+
+    def get(self, request, *args, **kwargs):
+        data = get_month_wireframe(*args, **kwargs)
+        days_with_events = []
+        year = int(kwargs['year'])
+        month = int(kwargs['month'])
+
+        for week in data['monthly_days']:
+            week_days = []
+            for day in week:
+                if day[0] != 0:
+                    events = models.Event.objects.filter(
+                            calendar__owner=request.user,
+                            start__lte=datetime(year, month, day[0], 23, 59),
+                            end__gte=datetime(year, month, day[0], 0, 0),
+                    )
+                else:
+                    events = []
+                week_days.append((day[0], day[1], events))
+            days_with_events.append(week_days)
+
+        data['monthly_days'] = days_with_events
+        return render_to_response(self.template_name, data,
+            context_instance=RequestContext(request))
 
 
 class CalendarDailyDetailedView(AjaxRequiredMixin, TemplateView):
