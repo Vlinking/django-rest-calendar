@@ -26,6 +26,7 @@ Mayan Calendar 2015
     <div class="user_bar">
         Użytkownik <strong>{{ username }}</strong>&nbsp;|&nbsp;
         <a href="/accounts/logout">wyloguj</a>
+        |&nbsp;&nbsp;Strefa czasowa: <strong>{{ user_settings.timezone }}</strong>
     </div>
     <div></div>
     <div class="clear">&nbsp;</div>
@@ -58,5 +59,4 @@ Mayan Calendar 2015
 {% else %}
 <div>Aby korzystać z tego kalendarza musisz się <a href="/accounts/login">zalogować</a>.</div>
 {% endif %}
-
 {% endblock %}

@@ -3,6 +3,8 @@ from pytz import all_timezones
 
 # Assume the calendar is for Europeans only (as it currently has only Polish language).
 TIMEZONE_CONTINENT = "Europe"
+# Assume the application is for Poles mostly (as it currently has only Polish language).
+DEFAULT_TIMEZONE = "Europe/Warsaw"
 
 
 def get_timezones():

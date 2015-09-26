@@ -7,6 +7,7 @@ from django.template import RequestContext
 from django.views.generic import TemplateView
 
 from rest_framework import viewsets, permissions, filters
+from accounts.models import CalendarUser
 
 from filters import IsOwnerFilterBackend, IsEventCalendarOwnerFilterBackend
 from serializers import CalendarSerializer, EventSerializer, CalendarOwnedSerializer, EventOwnedSerializer
@@ -160,8 +161,6 @@ class CalendarMonthlyDetailedView(DisplayEventsMixin, CalendarMonthlyView):
             days_with_events.append(week_days)
 
         data['monthly_days'] = days_with_events
-        import pdb; pdb.set_trace()
-
         return render_to_response(self.template_name, data,
             context_instance=RequestContext(request))
 
@@ -176,12 +175,21 @@ class CalendarDailyDetailedView(DisplayEventsMixin, AjaxRequiredMixin, TemplateV
         year = int(kwargs['year'])
         month = int(kwargs['month'])
         day = int(kwargs['day'])
+        # filter all-day events
+        all_day_events = models.Event.objects.filter(
+                calendar__owner=request.user,
+                type=models.Event.ALL_DAY,
+                start__lte=datetime(year, month, day, 23, 59),
+                end__gte=datetime(year, month, day, 0, 0),
+        )
+        # filter normal events
         hours = []
         for hour in range(0, 24):
             events = models.Event.objects.filter(
                     calendar__owner=request.user,
-                    start__lte=datetime(year, month, day, hour, 0),
-                    end__gte=datetime(year, month, day, hour, 59),
+                    type=models.Event.NORMAL,
+                    start__lte=datetime(year, month, day, hour, 59),
+                    end__gte=datetime(year, month, day, hour, 0),
             )
             events = self.filter_calendars(request, events)
             hours.append((hour, events))
@@ -190,7 +198,8 @@ class CalendarDailyDetailedView(DisplayEventsMixin, AjaxRequiredMixin, TemplateV
             'hours': hours,
             'year': year,
             'month': month,
-            'day': day
+            'day': day,
+            'all_day_events': all_day_events
         }
         return render_to_response(self.template_name, data,
             context_instance=RequestContext(request))
@@ -206,12 +215,14 @@ class IndexView(TemplateView):
         context = super(IndexView, self).get_context_data(**kwargs)
         if self.request.user.is_authenticated():
             now = datetime.now()
+            user_settings = CalendarUser.objects.get(user=self.request.user)
             context.update(
                 {
                     'current_month': now.month,
                     'current_year': now.year,
                     'today': now.day,
-                    'username': self.request.user.username
+                    'username': self.request.user.username,
+                    'user_settings': user_settings
                 }
             )
         return context

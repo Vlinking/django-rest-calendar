@@ -1,4 +1,8 @@
-    <div class="header">{{ day }} {{ month }} {{ year }}</div>
+    <div class="header">{{ day }} {{ month }} {{ year }}
+        {% for event in all_day_events %}
+            <span id="event_{{ event.id }}" style="color: #{{ event.calendar.color }};">{{ event.title }}</span>
+        {% endfor %}
+    </div>
     <div class="large_day">
         {% for hour in hours %}
             <div class="hour">

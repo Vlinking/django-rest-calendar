@@ -4,7 +4,7 @@ import datetime
 from django.db import models
 from django.contrib.auth.models import User
 
-from core.utils import get_timezones
+from core.utils import get_timezones, DEFAULT_TIMEZONE
 
 
 class Calendar(models.Model):
@@ -35,7 +35,7 @@ class Event(models.Model):
     calendar = models.ForeignKey(Calendar)
     title = models.CharField(max_length=50)
     description = models.TextField()
-    timezone = models.CharField(max_length=50, choices=get_timezones())
+    timezone = models.CharField(max_length=50, choices=get_timezones(), default=DEFAULT_TIMEZONE)
     type = models.CharField(max_length=2, choices=TYPE_CHOICES, default=NORMAL)
     # same field for both Event types, data will be truncated on 'ALL_DAY' events on model save
     start = models.DateTimeField(default=datetime.datetime.now)

@@ -26,7 +26,7 @@ function load_month_detailed(year, month) {
 }
 
 function load_day_detailed(year, month) {
-    $.get('/calendars/api/get_calendar_daily_detailed/'+ year + '/' + month + '/' + today, {}, function(data) {
+    $.get('/calendars/api/get_calendar_daily_detailed/'+ year + '/' + month + '/' + today, {'calendars': [1,2,3,4,5]}, function(data) {
            $('#large_calendar').html(data);
        });
 }
