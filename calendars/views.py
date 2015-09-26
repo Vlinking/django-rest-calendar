@@ -121,6 +121,9 @@ class CalendarMonthlyView(AjaxRequiredMixin, TemplateView):
 
 
 class DisplayEventsMixin(object):
+    """
+    A mixin that enables backend support for calendar-based Event filtering
+    """
     def filter_calendars(self, request, events):
         calendars_str = request.GET.getlist('calendars[]')
         calendars = [int(x) for x in calendars_str]
@@ -130,6 +133,9 @@ class DisplayEventsMixin(object):
 
 
 class CalendarMonthlyDetailedView(DisplayEventsMixin, CalendarMonthlyView):
+    """
+    The monthly calendar view including Events
+    """
     template_name = 'calendars/large_calendar.html'
 
     def get(self, request, *args, **kwargs):
@@ -154,13 +160,15 @@ class CalendarMonthlyDetailedView(DisplayEventsMixin, CalendarMonthlyView):
             days_with_events.append(week_days)
 
         data['monthly_days'] = days_with_events
+        import pdb; pdb.set_trace()
+
         return render_to_response(self.template_name, data,
             context_instance=RequestContext(request))
 
 
 class CalendarDailyDetailedView(DisplayEventsMixin, AjaxRequiredMixin, TemplateView):
     """
-    The view of a day, sliced into hours
+    The view of a day, sliced into hours, including Events
     """
     template_name = 'calendars/large_day.html'
 

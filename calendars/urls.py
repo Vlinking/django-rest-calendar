@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
 from django.conf.urls import url, include
 
 from rest_framework import routers
 
 from . import views
 
+# Django REST framework views
 router = routers.DefaultRouter()
 router.register(r'api/admin/calendars', views.CalendarAdminViewSet)
 router.register(r'api/admin/events', views.EventAdminViewSet)
@@ -20,5 +22,6 @@ urlpatterns = [
         views.CalendarDailyDetailedView.as_view()),
     # regular views
     url(r'^$', views.IndexView.as_view(), name='index'),
+    # Django REST API
     url(r'^', include(router.urls)),
 ]

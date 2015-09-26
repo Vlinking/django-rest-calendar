@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from rest_framework import filters
 
 class IsOwnerFilterBackend(filters.BaseFilterBackend):
@@ -10,7 +11,7 @@ class IsOwnerFilterBackend(filters.BaseFilterBackend):
 
 class IsEventCalendarOwnerFilterBackend(filters.BaseFilterBackend):
     """
-    Filter for getting only owned objects
+    Filter for getting only owned objects, for Events
     """
     def filter_queryset(self, request, queryset, view):
         return queryset.filter(calendar__owner=request.user)
