@@ -9,6 +9,7 @@ from django.views.generic import TemplateView
 from rest_framework import viewsets, permissions, filters, status
 from rest_framework.response import Response
 from accounts.models import CalendarUser
+from calendars.permissions import IsOwnerOrReadOnly
 
 from filters import IsOwnerFilterBackend, IsEventCalendarOwnerFilterBackend
 from serializers import CalendarSerializer, EventSerializer, CalendarOwnedSerializer, EventOwnedSerializer, \
@@ -110,7 +111,7 @@ class EventOwnedViewSet(EventAdminViewSet):
     API view for displaying only events that are the current user's
     """
     serializer_class = EventOwnedSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, IsOwnerOrReadOnly)
     filter_backends = (IsEventCalendarOwnerFilterBackend,)
 
 
