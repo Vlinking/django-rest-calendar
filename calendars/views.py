@@ -13,7 +13,7 @@ from calendars.permissions import IsOwnerOrReadOnly
 
 from filters import IsOwnerFilterBackend, IsEventCalendarOwnerFilterBackend
 from serializers import CalendarSerializer, EventSerializer, CalendarOwnedSerializer, EventOwnedSerializer, \
-    CalendarSharingSerializer
+    CalendarSharingSerializer, InvitationHostSerializer, InvitationInviteeSerializer
 from calendars import models
 
 
@@ -123,7 +123,23 @@ class CalendarSharingViewSet(OwnerMixin, viewsets.ModelViewSet):
     queryset = models.CalendarSharing.objects.all()
 
 
-class CalendarMonthlyView(AjaxRequiredMixin, TemplateView):
+class InvitationHostViewSet(OwnerMixin, viewsets.ModelViewSet):
+    """
+    API view for creating invitations
+    """
+    serializer_class = InvitationHostSerializer
+    queryset = models.Invitation.objects.all()
+
+
+class InvitationInviteeViewSet(viewsets.ModelViewSet):
+    """
+    API view for editing invitations
+    """
+    serializer_class = InvitationInviteeSerializer
+    queryset = models.Invitation.objects.all()
+
+
+class CalendarMonthlyView(TemplateView):
     """
     The little calendar ajax view
     """
@@ -192,7 +208,7 @@ class CalendarDailyDetailedView(DisplayEventsMixin, AjaxRequiredMixin, TemplateV
         # filter all-day events
         all_day_events = models.Event.objects.filter(
                 Q(calendar__owner=request.user) | Q(calendar__calendarsharing__recipient=request.user),
-                type=models.Event.ALL_DAY,
+                type=models.EventMixin.ALL_DAY,
                 start__lte=datetime(year, month, day, 23, 59),
                 end__gte=datetime(year, month, day, 0, 0),
         )
@@ -201,7 +217,7 @@ class CalendarDailyDetailedView(DisplayEventsMixin, AjaxRequiredMixin, TemplateV
         for hour in range(0, 24):
             events = models.Event.objects.filter(
                     Q(calendar__owner=request.user) | Q(calendar__calendarsharing__recipient=request.user),
-                    type=models.Event.NORMAL,
+                    type=models.EventMixin.NORMAL,
                     start__lte=datetime(year, month, day, hour, 59),
                     end__gte=datetime(year, month, day, hour, 0),
             )

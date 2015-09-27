@@ -2,7 +2,7 @@
 from datetime import datetime
 from rest_framework import serializers
 
-from calendars.models import Calendar, Event, CalendarSharing
+from calendars.models import Calendar, Event, CalendarSharing, Invitation
 
 
 class CalendarSerializer(serializers.HyperlinkedModelSerializer):
@@ -63,3 +63,25 @@ class CalendarSharingSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CalendarSharing
         fields = ('owner', 'recipient', 'calendar', 'type')
+
+
+class InvitationHostSerializer(serializers.HyperlinkedModelSerializer):
+    """
+    Serializer for adding invitations
+    """
+    class Meta:
+        model = Invitation
+        fields = ('invitee', 'event')
+
+
+class InvitationInviteeSerializer(serializers.HyperlinkedModelSerializer):
+    """
+    Serializer for viewing/editing invitations
+    """
+    class Meta:
+        model = Invitation
+        fields = ('title', 'description', 'type', 'start', 'end', 'rvsp')
+
+
+
+

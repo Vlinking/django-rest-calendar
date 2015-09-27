@@ -4,7 +4,7 @@ from calendars.models import CalendarSharing
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
     """
-    Checks if it is the owner
+    Checks if it is the owner, or a person who has the calendar shared with "write" permissions
     """
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
