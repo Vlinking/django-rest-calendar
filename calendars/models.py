@@ -4,6 +4,8 @@ import datetime
 from django.db import models
 from django.contrib.auth.models import User
 
+from django.utils import timezone as _timezone
+
 from core.utils import get_timezones, DEFAULT_TIMEZONE
 
 
@@ -38,9 +40,28 @@ class Event(models.Model):
     timezone = models.CharField(max_length=50, choices=get_timezones(), default=DEFAULT_TIMEZONE)
     type = models.CharField(max_length=2, choices=TYPE_CHOICES, default=NORMAL)
     # same field for both Event types, data will be truncated on 'ALL_DAY' events on model save
-    start = models.DateTimeField(default=datetime.datetime.now)
-    end = models.DateTimeField(default=datetime.datetime.now)
+    start = models.DateTimeField(default=_timezone.now)
+    end = models.DateTimeField(default=_timezone.now)
 
     def __unicode__(self):
         return self.title
+
+
+class CalendarSharing(models.Model):
+    """
+    Many to many relation containing the calendar sharing
+    """
+    READ = 'R'
+    WRITE = 'W'
+    TYPE_CHOICES = (
+        (READ, 'do odczytu'),
+        (WRITE, 'do zapisu'),
+    )
+
+    owner = models.ForeignKey(User, related_name='sharing_owner')
+    recipient = models.ForeignKey(User)
+    calendar = models.ForeignKey(Calendar)
+    type = models.CharField(max_length=1, choices=TYPE_CHOICES, default=READ)
+
+
 

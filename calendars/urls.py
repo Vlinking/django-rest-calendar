@@ -11,6 +11,7 @@ router.register(r'api/admin/calendars', views.CalendarAdminViewSet)
 router.register(r'api/admin/events', views.EventAdminViewSet)
 router.register(r'api/user/calendars', views.CalendarOwnedViewSet)
 router.register(r'api/user/events', views.EventOwnedViewSet)
+router.register(r'api/user/calendar_sharing', views.CalendarSharingViewSet)
 
 urlpatterns = [
     # API

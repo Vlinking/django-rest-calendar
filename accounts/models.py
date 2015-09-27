@@ -4,12 +4,12 @@ from django.db import models
 
 from rest_framework import serializers
 
-from core.utils import get_timezones
+from core.utils import get_timezones, DEFAULT_TIMEZONE
 
 
 class CalendarUser(models.Model):
     user = models.OneToOneField(User)
-    timezone = models.CharField(max_length=50, choices=get_timezones())
+    timezone = models.CharField(max_length=50, choices=get_timezones(), default=DEFAULT_TIMEZONE)
 
 
 class CalendarUserSerializer(serializers.HyperlinkedModelSerializer):

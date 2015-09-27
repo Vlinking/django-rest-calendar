@@ -6,11 +6,13 @@ from datetime import datetime
 from django.template import RequestContext
 from django.views.generic import TemplateView
 
-from rest_framework import viewsets, permissions, filters
+from rest_framework import viewsets, permissions, filters, status
+from rest_framework.response import Response
 from accounts.models import CalendarUser
 
 from filters import IsOwnerFilterBackend, IsEventCalendarOwnerFilterBackend
-from serializers import CalendarSerializer, EventSerializer, CalendarOwnedSerializer, EventOwnedSerializer
+from serializers import CalendarSerializer, EventSerializer, CalendarOwnedSerializer, EventOwnedSerializer, \
+    CalendarSharingSerializer
 from calendars import models
 
 
@@ -56,6 +58,14 @@ def get_month_wireframe(year, month, day):
     }
 
 
+class OwnerMixin(object):
+    permission_classes = (permissions.IsAuthenticated,)
+    filter_backends = (IsOwnerFilterBackend,)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+
 class CalendarAdminViewSet(viewsets.ModelViewSet):
     """
     Convenience API view for viewing all data for the admin
@@ -76,16 +86,11 @@ class EventAdminViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAdminUser,)
 
 
-class CalendarOwnedViewSet(CalendarAdminViewSet):
+class CalendarOwnedViewSet(OwnerMixin, CalendarAdminViewSet):
     """
     API view for displaying only calendars that are the current user's
     """
     serializer_class = CalendarOwnedSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = (IsOwnerFilterBackend,)
-
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
 
 
 class EventOwnedViewSet(EventAdminViewSet):
@@ -95,6 +100,14 @@ class EventOwnedViewSet(EventAdminViewSet):
     serializer_class = EventOwnedSerializer
     permission_classes = (permissions.IsAuthenticated,)
     filter_backends = (IsEventCalendarOwnerFilterBackend,)
+
+
+class CalendarSharingViewSet(OwnerMixin, viewsets.ModelViewSet):
+    """
+    API view for calendar sharing
+    """
+    serializer_class = CalendarSharingSerializer
+    queryset = models.CalendarSharing.objects.all()
 
 
 class AjaxRequiredMixin(object):
@@ -214,8 +227,9 @@ class IndexView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(IndexView, self).get_context_data(**kwargs)
         if self.request.user.is_authenticated():
-            now = datetime.now()
             user_settings = CalendarUser.objects.get(user=self.request.user)
+            self.request.session['django_timezone'] = user_settings.timezone
+            now = datetime.now()
             context.update(
                 {
                     'current_month': now.month,
