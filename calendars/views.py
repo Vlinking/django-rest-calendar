@@ -66,6 +66,18 @@ class OwnerMixin(object):
         serializer.save(owner=self.request.user)
 
 
+class AjaxRequiredMixin(object):
+    """
+    A mixin that blocks the view when not using ajax
+    """
+    def dispatch(self, request, *args, **kwargs):
+        if request.is_ajax():
+            return super(AjaxRequiredMixin, self).dispatch(request, *args, **kwargs)
+        else:
+            return render_to_response('calendars/error_no_ajax.html', {},
+                context_instance=RequestContext(request))
+
+
 class CalendarAdminViewSet(viewsets.ModelViewSet):
     """
     Convenience API view for viewing all data for the admin
@@ -110,18 +122,6 @@ class CalendarSharingViewSet(OwnerMixin, viewsets.ModelViewSet):
     queryset = models.CalendarSharing.objects.all()
 
 
-class AjaxRequiredMixin(object):
-    """
-    A mixin that blocks the view when not using ajax
-    """
-    def dispatch(self, request, *args, **kwargs):
-        if request.is_ajax():
-            return super(AjaxRequiredMixin, self).dispatch(request, *args, **kwargs)
-        else:
-            return render_to_response('calendars/error_no_ajax.html', {},
-                context_instance=RequestContext(request))
-
-
 class CalendarMonthlyView(AjaxRequiredMixin, TemplateView):
     """
     The little calendar ajax view
@@ -146,7 +146,7 @@ class DisplayEventsMixin(object):
         return events
 
 
-class CalendarMonthlyDetailedView(DisplayEventsMixin, CalendarMonthlyView):
+class CalendarMonthlyDetailedView(DisplayEventsMixin, AjaxRequiredMixin, CalendarMonthlyView):
     """
     The monthly calendar view including Events
     """
@@ -163,7 +163,7 @@ class CalendarMonthlyDetailedView(DisplayEventsMixin, CalendarMonthlyView):
             for day in week:
                 if day[0] != 0:
                     events = models.Event.objects.filter(
-                            calendar__owner=request.user,
+                            Q(calendar__owner=request.user) | Q(calendar__calendarsharing__recipient=request.user),
                             start__lte=datetime(year, month, day[0], 23, 59),
                             end__gte=datetime(year, month, day[0], 0, 0),
                     )
@@ -190,7 +190,7 @@ class CalendarDailyDetailedView(DisplayEventsMixin, AjaxRequiredMixin, TemplateV
         day = int(kwargs['day'])
         # filter all-day events
         all_day_events = models.Event.objects.filter(
-                calendar__owner=request.user,
+                Q(calendar__owner=request.user) | Q(calendar__calendarsharing__recipient=request.user),
                 type=models.Event.ALL_DAY,
                 start__lte=datetime(year, month, day, 23, 59),
                 end__gte=datetime(year, month, day, 0, 0),
@@ -199,7 +199,7 @@ class CalendarDailyDetailedView(DisplayEventsMixin, AjaxRequiredMixin, TemplateV
         hours = []
         for hour in range(0, 24):
             events = models.Event.objects.filter(
-                    calendar__owner=request.user,
+                    Q(calendar__owner=request.user) | Q(calendar__calendarsharing__recipient=request.user),
                     type=models.Event.NORMAL,
                     start__lte=datetime(year, month, day, hour, 59),
                     end__gte=datetime(year, month, day, hour, 0),
@@ -227,8 +227,12 @@ class IndexView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(IndexView, self).get_context_data(**kwargs)
         if self.request.user.is_authenticated():
-            user_settings = CalendarUser.objects.get(user=self.request.user)
-            self.request.session['django_timezone'] = user_settings.timezone
+            try:
+                user_settings = CalendarUser.objects.get(user=self.request.user)
+            except CalendarUser.DoesNotExist:
+                user_settings = None
+            else:
+                self.request.session['django_timezone'] = user_settings.timezone
             now = datetime.now()
             context.update(
                 {
