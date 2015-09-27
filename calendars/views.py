@@ -146,7 +146,7 @@ class DisplayEventsMixin(object):
         return events
 
 
-class CalendarMonthlyDetailedView(DisplayEventsMixin, AjaxRequiredMixin, CalendarMonthlyView):
+class CalendarMonthlyDetailedView(DisplayEventsMixin, CalendarMonthlyView):
     """
     The monthly calendar view including Events
     """
