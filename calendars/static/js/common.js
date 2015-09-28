@@ -25,6 +25,12 @@ function load_month_detailed(year, month) {
        });
 }
 
+function load_week_detailed(year, month) {
+    $.get('/calendars/api/get_calendar_weekly_detailed/'+ year + '/' + month + '/' + today, {'calendars': [1,2,3,4,5]}, function(data) {
+           $('#large_calendar').html(data);
+       });
+}
+
 function load_day_detailed(year, month) {
     $.get('/calendars/api/get_calendar_daily_detailed/'+ year + '/' + month + '/' + today, {'calendars': [1,2,3,4,5]}, function(data) {
            $('#large_calendar').html(data);
@@ -66,6 +72,7 @@ $(document).ready(function() {
 
    $('#weekly_view').click(function() {
         select_view_mode($(this));
+        load_week_detailed(current_year, current_month, today);
    });
 
    $('#monthly_view').click(function() {

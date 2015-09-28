@@ -55,7 +55,26 @@ def get_month_wireframe(year, month, day):
         'monthly_days': monthly_days,
         'year': year,
         'month': MONTHS[month],
-        'today': day
+        'today': day,
+    }
+
+
+def get_week_wireframe(year, month, day):
+    """
+    Utility function for returning the current week
+    """
+    year, month, day = int(year), int(month), int(day)
+    cal = Calendar()
+    monthly_days = cal.monthdays2calendar(year, month)
+    current_week = None
+    for week in monthly_days:
+        if [i for i, v in enumerate(week) if v[0] == day]:
+            current_week = week
+    return {
+        'week': current_week,
+        'year': year,
+        'month': MONTHS[month],
+        'today': day,
     }
 
 
@@ -77,6 +96,41 @@ class AjaxRequiredMixin(object):
         else:
             return render_to_response('calendars/error_no_ajax.html', {},
                 context_instance=RequestContext(request))
+
+
+class DisplayEventsMixin(object):
+    """
+    A mixin that enables backend support for calendar-based Event filtering
+    """
+    def filter_calendars(self, request, events):
+        calendars_str = request.GET.getlist('calendars[]')
+        calendars = [int(x) for x in calendars_str]
+        if calendars:
+            events = events.filter(calendar__in=calendars,)
+        return events
+
+
+class DailyMixin(object):
+    def get_daily_hours(self, request, year, month, day):
+        # filter all-day events
+        all_day_events = models.Event.objects.filter(
+                Q(calendar__owner=request.user) | Q(calendar__calendarsharing__recipient=request.user),
+                type=models.EventMixin.ALL_DAY,
+                start__lte=datetime(year, month, day, 23, 59),
+                end__gte=datetime(year, month, day, 0, 0),
+        )
+        # filter normal events
+        hours = []
+        for hour in range(0, 24):
+            events = models.Event.objects.filter(
+                    Q(calendar__owner=request.user) | Q(calendar__calendarsharing__recipient=request.user),
+                    type=models.EventMixin.NORMAL,
+                    start__lte=datetime(year, month, day, hour, 59),
+                    end__gte=datetime(year, month, day, hour, 0),
+            )
+            events = self.filter_calendars(request, events)
+            hours.append((hour, events))
+        return (hours, all_day_events)
 
 
 class CalendarAdminViewSet(viewsets.ModelViewSet):
@@ -151,18 +205,6 @@ class CalendarMonthlyView(TemplateView):
             context_instance=RequestContext(request))
 
 
-class DisplayEventsMixin(object):
-    """
-    A mixin that enables backend support for calendar-based Event filtering
-    """
-    def filter_calendars(self, request, events):
-        calendars_str = request.GET.getlist('calendars[]')
-        calendars = [int(x) for x in calendars_str]
-        if calendars:
-            events = events.filter(calendar__in=calendars,)
-        return events
-
-
 class CalendarMonthlyDetailedView(DisplayEventsMixin, CalendarMonthlyView):
     """
     The monthly calendar view including Events
@@ -195,7 +237,35 @@ class CalendarMonthlyDetailedView(DisplayEventsMixin, CalendarMonthlyView):
             context_instance=RequestContext(request))
 
 
-class CalendarDailyDetailedView(DisplayEventsMixin, AjaxRequiredMixin, TemplateView):
+class CalendarWeeklyDetailedView(DisplayEventsMixin, DailyMixin, TemplateView):
+    template_name = 'calendars/large_week.html'
+
+    def get(self, request, *args, **kwargs):
+        year = int(kwargs['year'])
+        month = int(kwargs['month'])
+        day = int(kwargs['day'])
+
+        week = get_week_wireframe(*args, **kwargs)['week']
+        weekly_days = []
+        for day_of_the_week in week:
+            if day_of_the_week[0] != 0:
+                hours, all_day_events = self.get_daily_hours(request, year, month, day_of_the_week[0])
+            else:
+                hours, all_day_events = ([], [])
+            weekly_days.append((day_of_the_week[0], day_of_the_week[1], hours, all_day_events))
+
+        data = {
+            'year': year,
+            'month': month,
+            'day': day,
+            'weekly_days': weekly_days
+        }
+
+        return render_to_response(self.template_name, data,
+            context_instance=RequestContext(request))
+
+
+class CalendarDailyDetailedView(DisplayEventsMixin, DailyMixin, AjaxRequiredMixin, TemplateView):
     """
     The view of a day, sliced into hours, including Events
     """
@@ -205,25 +275,8 @@ class CalendarDailyDetailedView(DisplayEventsMixin, AjaxRequiredMixin, TemplateV
         year = int(kwargs['year'])
         month = int(kwargs['month'])
         day = int(kwargs['day'])
-        # filter all-day events
-        all_day_events = models.Event.objects.filter(
-                Q(calendar__owner=request.user) | Q(calendar__calendarsharing__recipient=request.user),
-                type=models.EventMixin.ALL_DAY,
-                start__lte=datetime(year, month, day, 23, 59),
-                end__gte=datetime(year, month, day, 0, 0),
-        )
-        # filter normal events
-        hours = []
-        for hour in range(0, 24):
-            events = models.Event.objects.filter(
-                    Q(calendar__owner=request.user) | Q(calendar__calendarsharing__recipient=request.user),
-                    type=models.EventMixin.NORMAL,
-                    start__lte=datetime(year, month, day, hour, 59),
-                    end__gte=datetime(year, month, day, hour, 0),
-            )
-            events = self.filter_calendars(request, events)
-            hours.append((hour, events))
 
+        hours, all_day_events = self.get_daily_hours(request, year, month, day)
         data = {
             'hours': hours,
             'year': year,
