@@ -10,6 +10,7 @@ from rest_framework import viewsets, permissions, filters, status
 from rest_framework.response import Response
 from accounts.models import CalendarUser
 from calendars.permissions import IsOwnerOrReadOnly
+from core.utils import normalize_to_utc
 
 from filters import IsOwnerFilterBackend, IsEventCalendarOwnerFilterBackend
 from serializers import CalendarSerializer, EventSerializer, CalendarOwnedSerializer, EventOwnedSerializer, \
@@ -112,12 +113,13 @@ class DisplayEventsMixin(object):
 
 class DailyMixin(object):
     def get_daily_hours(self, request, year, month, day):
+        timezone = request.session['django_timezone']
         # filter all-day events
         all_day_events = models.Event.objects.filter(
                 Q(calendar__owner=request.user) | Q(calendar__calendarsharing__recipient=request.user),
                 type=models.EventMixin.ALL_DAY,
-                start__lte=datetime(year, month, day, 23, 59),
-                end__gte=datetime(year, month, day, 0, 0),
+                start__lte=normalize_to_utc(datetime(year, month, day, 23, 59), timezone),
+                end__gte=normalize_to_utc(datetime(year, month, day, 0, 0), timezone),
         )
         # filter normal events
         hours = []
@@ -125,8 +127,8 @@ class DailyMixin(object):
             events = models.Event.objects.filter(
                     Q(calendar__owner=request.user) | Q(calendar__calendarsharing__recipient=request.user),
                     type=models.EventMixin.NORMAL,
-                    start__lte=datetime(year, month, day, hour, 59),
-                    end__gte=datetime(year, month, day, hour, 0),
+                    start__lte=normalize_to_utc(datetime(year, month, day, hour, 59), timezone),
+                    end__gte=normalize_to_utc(datetime(year, month, day, hour, 0), timezone),
             )
             events = self.filter_calendars(request, events)
             hours.append((hour, events))
@@ -193,7 +195,7 @@ class InvitationInviteeViewSet(viewsets.ModelViewSet):
     queryset = models.Invitation.objects.all()
 
 
-class CalendarMonthlyView(TemplateView):
+class CalendarMonthlyView(AjaxRequiredMixin, TemplateView):
     """
     The little calendar ajax view
     """
@@ -216,6 +218,7 @@ class CalendarMonthlyDetailedView(DisplayEventsMixin, CalendarMonthlyView):
         days_with_events = []
         year = int(kwargs['year'])
         month = int(kwargs['month'])
+        timezone = request.session['django_timezone']
 
         for week in data['monthly_days']:
             week_days = []
@@ -223,8 +226,8 @@ class CalendarMonthlyDetailedView(DisplayEventsMixin, CalendarMonthlyView):
                 if day[0] != 0:
                     events = models.Event.objects.filter(
                             Q(calendar__owner=request.user) | Q(calendar__calendarsharing__recipient=request.user),
-                            start__lte=datetime(year, month, day[0], 23, 59),
-                            end__gte=datetime(year, month, day[0], 0, 0),
+                            start__lte=normalize_to_utc(datetime(year, month, day[0], 23, 59), timezone),
+                            end__gte=normalize_to_utc(datetime(year, month, day[0], 0, 0), timezone),
                     )
                     events = self.filter_calendars(request, events)
                 else:
@@ -237,7 +240,7 @@ class CalendarMonthlyDetailedView(DisplayEventsMixin, CalendarMonthlyView):
             context_instance=RequestContext(request))
 
 
-class CalendarWeeklyDetailedView(DisplayEventsMixin, DailyMixin, TemplateView):
+class CalendarWeeklyDetailedView(DisplayEventsMixin, DailyMixin, AjaxRequiredMixin, TemplateView):
     template_name = 'calendars/large_week.html'
 
     def get(self, request, *args, **kwargs):
