@@ -6,13 +6,13 @@ from datetime import datetime
 from django.template import RequestContext
 from django.views.generic import TemplateView
 
-from rest_framework import viewsets, permissions, filters, status
-from rest_framework.response import Response
-from accounts.models import CalendarUser
-from calendars.permissions import IsOwnerOrReadOnly
-from core.utils import normalize_to_utc
+from rest_framework import viewsets, permissions, mixins
+from rest_framework.viewsets import GenericViewSet
 
-from filters import IsOwnerFilterBackend, IsEventCalendarOwnerFilterBackend
+from accounts.models import CalendarUser
+from calendars.permissions import IsOwnerOrReadOnly, IsInvitee
+from core.utils import normalize_to_utc
+from filters import IsOwnerFilterBackend, IsEventCalendarOwnerFilterBackend, IsInviteeFilterBackend
 from serializers import CalendarSerializer, EventSerializer, CalendarOwnedSerializer, EventOwnedSerializer, \
     CalendarSharingSerializer, InvitationHostSerializer, InvitationInviteeSerializer
 from calendars import models
@@ -77,6 +77,16 @@ def get_week_wireframe(year, month, day):
         'month': MONTHS[month],
         'today': day,
     }
+
+
+class ManipulateViewSet(mixins.RetrieveModelMixin,
+                   mixins.UpdateModelMixin,
+                   mixins.ListModelMixin,
+                   GenericViewSet):
+    """
+    A viewset that provides all methods save create and destroy
+    """
+    pass
 
 
 class OwnerMixin(object):
@@ -198,13 +208,27 @@ class InvitationHostViewSet(OwnerMixin, viewsets.ModelViewSet):
     serializer_class = InvitationHostSerializer
     queryset = models.Invitation.objects.all()
 
+    def perform_create(self, serializer):
+        # make a copy of the hosted event for the invitee
+        event = serializer.validated_data.get('event')
+        serializer.save(
+            title=event.title,
+            description=event.description,
+            type=event.type,
+            start=event.start,
+            end=event.end,
+            owner=self.request.user,
+        )
 
-class InvitationInviteeViewSet(viewsets.ModelViewSet):
+
+class InvitationInviteeViewSet(ManipulateViewSet):
     """
     API view for editing invitations
     """
     serializer_class = InvitationInviteeSerializer
     queryset = models.Invitation.objects.all()
+    filter_backends = (IsInviteeFilterBackend,)
+    permission_classes = (permissions.IsAuthenticated, IsInvitee,)
 
 
 class CalendarMonthlyView(AjaxRequiredMixin, TemplateView):
