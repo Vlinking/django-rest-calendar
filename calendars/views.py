@@ -103,6 +103,15 @@ class DisplayEventsMixin(object):
     """
     A mixin that enables backend support for calendar-based Event filtering
     """
+    def common_event_filters(self, request):
+        """
+        Function that filters for event owner, shared calendars and invitations
+        """
+        return models.Event.objects.filter(
+            Q(calendar__owner=request.user) | Q(calendar__calendarsharing__recipient=request.user)
+                | Q(invited_to__invitee=request.user),
+        )
+
     def filter_calendars(self, request, events):
         calendars_str = request.GET.getlist('calendars[]')
         calendars = [int(x) for x in calendars_str]
@@ -118,17 +127,17 @@ class DailyMixin(object):
     def get_daily_hours(self, request, year, month, day):
         timezone = request.session['django_timezone']
         # filter all-day events
-        all_day_events = models.Event.objects.filter(
-                Q(calendar__owner=request.user) | Q(calendar__calendarsharing__recipient=request.user),
-                type=models.EventMixin.ALL_DAY,
-                start__lte=normalize_to_utc(datetime(year, month, day, 23, 59), timezone),
-                end__gte=normalize_to_utc(datetime(year, month, day, 0, 0), timezone),
+        all_day_events = self.common_event_filters(request)
+        all_day_events = all_day_events.filter(
+            type=models.EventMixin.ALL_DAY,
+            start__lte=normalize_to_utc(datetime(year, month, day, 23, 59), timezone),
+            end__gte=normalize_to_utc(datetime(year, month, day, 0, 0), timezone),
         )
         # filter normal events
         hours = []
         for hour in range(0, 24):
-            events = models.Event.objects.filter(
-                    Q(calendar__owner=request.user) | Q(calendar__calendarsharing__recipient=request.user),
+            events = self.common_event_filters(request)
+            events = events.filter(
                     type=models.EventMixin.NORMAL,
                     start__lte=normalize_to_utc(datetime(year, month, day, hour, 59), timezone),
                     end__gte=normalize_to_utc(datetime(year, month, day, hour, 0), timezone),
@@ -227,8 +236,8 @@ class CalendarMonthlyDetailedView(DisplayEventsMixin, CalendarMonthlyView):
             week_days = []
             for day in week:
                 if day[0] != 0:
-                    events = models.Event.objects.filter(
-                            Q(calendar__owner=request.user) | Q(calendar__calendarsharing__recipient=request.user),
+                    events = self.common_event_filters(request)
+                    events = events.filter(
                             start__lte=normalize_to_utc(datetime(year, month, day[0], 23, 59), timezone),
                             end__gte=normalize_to_utc(datetime(year, month, day[0], 0, 0), timezone),
                     )
