@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 import datetime
 from django.contrib.auth.models import User
+import json
 from django.test import TestCase
+
 from mock import mock
-
 from model_mommy import mommy
+from rest_framework.test import APITestCase
 from accounts.models import CalendarUser
+from calendars.models import Invitation, Event, Calendar
+import dateutil.parser as parser
 
-from calendars.models import Event, Calendar, Invitation
 from calendars.views import get_month_wireframe, CalendarMonthlyView, IndexView
 
 
@@ -37,6 +40,21 @@ class ModelsCreationTest(TestCase):
         self.common_model_test(Invitation, 'title')
 
 
+class CalendarMonthlyViewTest(TestCase):
+    def setUp(self):
+        self.obj = CalendarMonthlyView()
+
+    @mock.patch('calendars.views.get_month_wireframe')
+    def test_get(self, m):
+        """
+        Test the get function
+        """
+        m.result = 'whatever'
+        request = mock.Mock()
+        self.obj.get(request)
+        self.assertTrue(m.called)
+
+
 class MonthWireframeTest(TestCase):
     def test_get_month_wireframe(self):
         """
@@ -59,21 +77,6 @@ class MonthWireframeTest(TestCase):
         )
 
 
-class CalendarMonthlyViewTest(TestCase):
-    def setUp(self):
-        self.obj = CalendarMonthlyView()
-
-    @mock.patch('calendars.views.get_month_wireframe')
-    def test_get(self, m):
-        """
-        Test the get function
-        """
-        m.result = 'whatever'
-        request = mock.Mock()
-        self.obj.get(request)
-        self.assertTrue(m.called)
-
-
 class IndexViewTest(TestCase):
     def setUp(self):
         self.obj = IndexView()
@@ -83,7 +86,7 @@ class IndexViewTest(TestCase):
 
     def test_get_context_data_authenticated(self):
         """
-        Test for the authenticated, non exception route
+        Test for the authenticated, no exception route
         """
         calendar_user = mommy.make(CalendarUser, user=self.obj.request.user)
         context = self.obj.get_context_data()
@@ -122,30 +125,81 @@ class IndexViewTest(TestCase):
         })
 
 
-# class APIViewTests(TestCase):
-#     def setUp(self):
-#         admin = mommy.make(User, is_staff=True)
-#         user = mommy.make(User)
-#
-#
-#     def test_monthly_view_test(self):
-#         pass
-#
-#     def test_weekly_view_test(self):
-#         pass
-#
-#     def test_daily_view_test(self):
-#         pass
-#
-#     def test_calendar_owner_access(self):
-#         pass
-#
-#     def test_calendar_anon_access(self):
-#         pass
-#
-#     def test_calendar_non_ajax_access(self):
-#         pass
+# functional tests
+class UsersMixin(object):
+    def setUp(self):
+        self.admin = mommy.make(User, is_staff=True)
+        self.user = mommy.make(User)
 
+
+class AdminViewMixin(UsersMixin):
+    url = ''
+    def test_view_anonymous(self):
+        """
+        Test anonymous view
+        """
+        response = self.client.get(self.url)
+        self.assertEqual(json.loads(response.content), {
+            u'detail': u'Authentication credentials were not provided.',
+        })
+
+    def test_view_normal_user(self):
+        """
+        Test normal user view
+        """
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(json.loads(response.content), {
+            u'detail': u'You do not have permission to perform this action.',
+        })
+
+
+class CalendarAdminViewSetTest(AdminViewMixin, APITestCase):
+    url = '/calendars/api/admin/calendars/'
+
+    def setUp(self):
+        super(CalendarAdminViewSetTest, self).setUp()
+        self.calendar = mommy.make('Calendar', owner=self.user)
+
+    def test_view_authenticated(self):
+        """
+        Test admin view
+        """
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(self.url)
+        self.assertEqual(json.loads(response.content), [{
+            u'owner': u"http://testserver/accounts/api/admin/users/{}/".format(self.user.id),
+            u'name': self.calendar.name,
+            u'color': self.calendar.color,
+        }])
+
+
+class EventAdminViewSetTest(AdminViewMixin, APITestCase):
+    url = '/calendars/api/admin/events/'
+
+    def setUp(self):
+        super(EventAdminViewSetTest, self).setUp()
+        self.calendar = mommy.make('Calendar', owner=self.user)
+        self.event = mommy.make('Event', calendar=self.calendar)
+
+    def test_view_authenticated(self):
+        """
+        Test admin view
+        """
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(self.url)
+        # ISO 8601
+        self.assertEqual(json.loads(response.content), [{
+            u'calendar': u"http://testserver/calendars/api/user/calendars/{}/"
+                         .format(self.calendar.id),
+            u'title': self.event.title,
+            u'description': self.event.description,
+            u'timezone': self.event.timezone,
+            u'type': self.event.type,
+            u'start': (parser.parse(unicode(self.event.start))).isoformat().replace('000+00:00', '000Z'),
+            u'end': (parser.parse(unicode(self.event.end))).isoformat().replace('000+00:00', '000Z'),
+            u'id': self.event.id,
+        }])
 
 
 
