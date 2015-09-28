@@ -96,7 +96,8 @@ class Invitation(models.Model):
     start = models.DateTimeField(default=_timezone.now)
     end = models.DateTimeField(default=_timezone.now)
 
-
+    def __unicode__(self):
+        return self.title
 
 
 
