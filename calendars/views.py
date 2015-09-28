@@ -112,6 +112,9 @@ class DisplayEventsMixin(object):
 
 
 class DailyMixin(object):
+    """
+    Mixin for detailed day views such as weekly and daily
+    """
     def get_daily_hours(self, request, year, month, day):
         timezone = request.session['django_timezone']
         # filter all-day events
@@ -241,6 +244,9 @@ class CalendarMonthlyDetailedView(DisplayEventsMixin, CalendarMonthlyView):
 
 
 class CalendarWeeklyDetailedView(DisplayEventsMixin, DailyMixin, AjaxRequiredMixin, TemplateView):
+    """
+    The view of a week, including Events
+    """
     template_name = 'calendars/large_week.html'
 
     def get(self, request, *args, **kwargs):
@@ -306,7 +312,7 @@ class IndexView(TemplateView):
                 user_settings = None
             else:
                 self.request.session['django_timezone'] = user_settings.timezone
-            now = datetime.now()
+            now = normalize_to_utc(datetime.now(), user_settings.timezone)
             context.update(
                 {
                     'current_month': now.month,
