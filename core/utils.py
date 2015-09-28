@@ -16,6 +16,16 @@ def get_timezones():
     return tuple([(x, x) for x in pytz.all_timezones if TIMEZONE_CONTINENT in x])
 
 
+def normalize_to_utc(time, timezone):
+    """
+    Convert naive time into current timezone, then UTC
+    """
+    utct = pytz.timezone(u'UTC')
+    tzt = pytz.timezone(timezone)
+
+    return tzt.localize(time).astimezone(utct)
+
+
 def datetime_now_not_naive():
     """
     have to clean migrations!

@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 from rest_framework import serializers
+import pytz
 
 from calendars.models import Calendar, Event, CalendarSharing, Invitation
+from core.utils import DEFAULT_TIMEZONE, normalize_to_utc
 
 
 class CalendarSerializer(serializers.HyperlinkedModelSerializer):
@@ -47,11 +49,18 @@ class EventOwnedSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', 'calendar', 'title', 'description', 'timezone', 'type', 'start', 'end')
 
     def save(self, **kwargs):
-        tz = self.context['request'].session['django_timezone']
-        # use self.validated_data, it goes on to be saved
-        # save times as UTC after conversion with the timezone set on the event
-        # start = self.validated_data.get('start', datetime.now())
-        # end = self.validated_data.get('end', datetime.now())
+        """
+        Save times as UTC after conversion with the timezone set on the event
+        """
+        tz = self.validated_data.get('timezone', DEFAULT_TIMEZONE)
+        start = self.validated_data.get('start', datetime.now())
+        end = self.validated_data.get('end', datetime.now())
+
+        start = normalize_to_utc(start, tz)
+        end = normalize_to_utc(end, tz)
+
+        self.validated_data['start'] = start
+        self.validated_data['end'] = end
 
         super(EventOwnedSerializer, self).save(**kwargs)
 
