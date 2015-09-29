@@ -25,9 +25,3 @@ def normalize_to_utc(time, timezone):
 
     return tzt.localize(time).astimezone(utct)
 
-
-def datetime_now_not_naive():
-    """
-    have to clean migrations!
-    """
-    pass
