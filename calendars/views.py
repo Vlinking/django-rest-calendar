@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.shortcuts import render_to_response
-from django.db.models import Q
+from django.db.models import Q, Count
 from calendar import Calendar
 from datetime import datetime
 from django.template import RequestContext
@@ -117,16 +117,24 @@ class DisplayEventsMixin(object):
         """
         Function that filters for event owner, shared calendars and invitations
         """
-        return models.Event.objects.filter(
-            Q(calendar__owner=request.user) | Q(calendar__calendarsharing__recipient=request.user)
-                | Q(invited_to__invitee=request.user),
+        events = models.Event.objects.filter(
+            Q(calendar__owner=request.user) | Q(calendar__calendarsharing__recipient=request.user) |
+            Q(invited_to__invitee=request.user)
         )
+        invites = models.Event.objects.filter(invited_to__invitee=request.user)
+        return (events, invites)
 
     def filter_calendars(self, request, events):
         calendars_str = request.GET.getlist('calendars[]')
         calendars = [int(x) for x in calendars_str]
         if calendars:
             events = events.filter(calendar__in=calendars,)
+        return events
+
+    def update_copied_invites(self, events, invites, user):
+        for event in events:
+            if event in invites:
+                event.title = models.Invitation.objects.get(event=event, invitee=user).title
         return events
 
 
@@ -137,22 +145,25 @@ class DailyMixin(object):
     def get_daily_hours(self, request, year, month, day):
         timezone = request.session['django_timezone']
         # filter all-day events
-        all_day_events = self.common_event_filters(request)
+        all_day_events, all_day_invites = self.common_event_filters(request)
         all_day_events = all_day_events.filter(
             type=models.EventMixin.ALL_DAY,
             start__lte=normalize_to_utc(datetime(year, month, day, 23, 59), timezone),
             end__gte=normalize_to_utc(datetime(year, month, day, 0, 0), timezone),
         )
+        all_day_events = self.filter_calendars(request, all_day_events)
+        all_day_events = self.update_copied_invites(all_day_events, all_day_invites, request.user)
         # filter normal events
         hours = []
         for hour in range(0, 24):
-            events = self.common_event_filters(request)
+            events, invites = self.common_event_filters(request)
             events = events.filter(
                     type=models.EventMixin.NORMAL,
                     start__lte=normalize_to_utc(datetime(year, month, day, hour, 59), timezone),
                     end__gte=normalize_to_utc(datetime(year, month, day, hour, 0), timezone),
             )
             events = self.filter_calendars(request, events)
+            events = self.update_copied_invites(events, invites, request.user)
             hours.append((hour, events))
         return (hours, all_day_events)
 
@@ -231,7 +242,7 @@ class InvitationInviteeViewSet(ManipulateViewSet):
     permission_classes = (permissions.IsAuthenticated, IsInvitee,)
 
 
-class CalendarMonthlyView(AjaxRequiredMixin, TemplateView):
+class CalendarMonthlyView(TemplateView):
     """
     The little calendar ajax view
     """
@@ -260,12 +271,13 @@ class CalendarMonthlyDetailedView(DisplayEventsMixin, CalendarMonthlyView):
             week_days = []
             for day in week:
                 if day[0] != 0:
-                    events = self.common_event_filters(request)
+                    events, invites = self.common_event_filters(request)
                     events = events.filter(
                             start__lte=normalize_to_utc(datetime(year, month, day[0], 23, 59), timezone),
                             end__gte=normalize_to_utc(datetime(year, month, day[0], 0, 0), timezone),
                     )
                     events = self.filter_calendars(request, events)
+                    events = self.update_copied_invites(events, invites, request.user)
                 else:
                     events = []
                 week_days.append((day[0], day[1], events))
