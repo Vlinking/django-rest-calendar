@@ -15,6 +15,9 @@ from calendars.views import get_month_wireframe, CalendarMonthlyView, IndexView
 
 
 # unit tests
+from core.utils import DEFAULT_TIMEZONE
+
+
 class ModelsCreationTest(TestCase):
     def common_model_test(self, klass, unicode_prop):
         obj = mommy.make(klass)
@@ -96,7 +99,7 @@ class IndexViewTest(TestCase):
             'current_year': now.year,
             'today': now.day,
             'username': self.obj.request.user.username,
-            'user_settings': calendar_user,
+            'timezone': DEFAULT_TIMEZONE,
             'view': self.obj,
         })
 
@@ -107,7 +110,6 @@ class IndexViewTest(TestCase):
         self.obj.request.user.is_authenticated = mock.MagicMock(return_value=False)
         context = self.obj.get_context_data()
         self.assertEqual(context, {'view': self.obj})
-
 
     def test_get_context_data_no_object(self):
         """
@@ -120,7 +122,7 @@ class IndexViewTest(TestCase):
             'current_year': now.year,
             'today': now.day,
             'username': self.obj.request.user.username,
-            'user_settings': None,
+            'timezone': u'UTC',
             'view': self.obj,
         })
 

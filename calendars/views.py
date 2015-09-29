@@ -348,23 +348,28 @@ class IndexView(TemplateView):
     """
     template_name = 'calendars/index.html'
 
+    def make_empty_user(self):
+        obj = type('empty_object', (object,), {})()
+        obj.timezone = u'UTC'
+        return obj
+
     def get_context_data(self, **kwargs):
         context = super(IndexView, self).get_context_data(**kwargs)
         if self.request.user.is_authenticated():
             try:
                 user_settings = CalendarUser.objects.get(user=self.request.user)
             except CalendarUser.DoesNotExist:
-                user_settings = None
+                self.request.session['django_timezone'] = u'UTC'
             else:
                 self.request.session['django_timezone'] = user_settings.timezone
-            now = normalize_to_utc(datetime.now(), user_settings.timezone)
+            now = normalize_to_utc(datetime.now(), self.request.session['django_timezone'])
             context.update(
                 {
                     'current_month': now.month,
                     'current_year': now.year,
                     'today': now.day,
                     'username': self.request.user.username,
-                    'user_settings': user_settings
+                    'timezone': self.request.session['django_timezone']
                 }
             )
         return context
