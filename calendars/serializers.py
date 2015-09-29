@@ -44,6 +44,15 @@ class EventOwnedSerializer(serializers.HyperlinkedModelSerializer):
     """
     id = serializers.ReadOnlyField()
 
+    def get_fields(self, *args, **kwargs):
+        """
+        Limit fields on API form
+        """
+        fields = super(EventOwnedSerializer, self).get_fields(*args, **kwargs)
+        request = self.context['request']
+        fields['calendar'].queryset = fields['calendar'].queryset.filter(owner=request.user)
+        return fields
+
     class Meta:
         model = Event
         fields = ('id', 'calendar', 'title', 'description', 'timezone', 'type', 'start', 'end')
@@ -69,15 +78,35 @@ class CalendarSharingSerializer(serializers.HyperlinkedModelSerializer):
     """
     Serializer for shared calendars
     """
+    def get_fields(self, *args, **kwargs):
+        """
+        Limit fields on API form
+        """
+        fields = super(CalendarSharingSerializer, self).get_fields(*args, **kwargs)
+        request = self.context['request']
+        fields['calendar'].queryset = fields['calendar'].queryset.filter(owner=request.user)
+        fields['recipient'].queryset = fields['recipient'].queryset.exclude(id=request.user.id)
+        return fields
+
     class Meta:
         model = CalendarSharing
-        fields = ('owner', 'recipient', 'calendar', 'type')
+        fields = ('recipient', 'calendar', 'type')
 
 
 class InvitationHostSerializer(serializers.HyperlinkedModelSerializer):
     """
     Serializer for adding invitations
     """
+    def get_fields(self, *args, **kwargs):
+        """
+        Limit fields on API form
+        """
+        fields = super(InvitationHostSerializer, self).get_fields(*args, **kwargs)
+        request = self.context['request']
+        fields['invitee'].queryset = fields['invitee'].queryset.exclude(id=request.user.id)
+        fields['event'].queryset = fields['event'].queryset.filter(calendar__owner=request.user)
+        return fields
+
     class Meta:
         model = Invitation
         fields = ('invitee', 'event')
@@ -87,9 +116,11 @@ class InvitationInviteeSerializer(serializers.HyperlinkedModelSerializer):
     """
     Serializer for viewing/editing invitations
     """
+    id = serializers.ReadOnlyField()
+
     class Meta:
         model = Invitation
-        fields = ('title', 'description', 'type', 'start', 'end', 'rvsp')
+        fields = ('id', 'title', 'description', 'type', 'start', 'end', 'rvsp')
 
 
 

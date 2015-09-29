@@ -45,7 +45,7 @@ class Event(models.Model):
     description = models.TextField()
     timezone = models.CharField(max_length=50, choices=get_timezones(), default=DEFAULT_TIMEZONE)
     type = models.CharField(max_length=2, choices=EventMixin.TYPE_CHOICES, default=EventMixin.NORMAL)
-    # same field for both Event types, data will be truncated on 'ALL_DAY' events on model save
+    # same field for both Event types
     start = models.DateTimeField(default=_timezone.now)
     end = models.DateTimeField(default=_timezone.now)
 
@@ -68,6 +68,9 @@ class CalendarSharing(models.Model):
     recipient = models.ForeignKey(User)
     calendar = models.ForeignKey(Calendar)
     type = models.CharField(max_length=1, choices=TYPE_CHOICES, default=READ)
+
+    class Meta:
+        unique_together = ('recipient', 'calendar')
 
 
 class Invitation(models.Model):
@@ -99,6 +102,7 @@ class Invitation(models.Model):
     def __unicode__(self):
         return self.title
 
-
+    class Meta:
+        unique_together = ('invitee', 'event')
 
 
