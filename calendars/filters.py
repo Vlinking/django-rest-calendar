@@ -10,6 +10,14 @@ class IsOwnerFilterBackend(filters.BaseFilterBackend):
         return queryset.filter(owner=request.user)
 
 
+class IsInviteeFilterBackend(filters.BaseFilterBackend):
+    """
+    Filter for getting only Invitations we were invited to
+    """
+    def filter_queryset(self, request, queryset, view):
+        return queryset.filter(invitee=request.user)
+
+
 class IsEventCalendarOwnerFilterBackend(filters.BaseFilterBackend):
     """
     Filter for getting only owned objects, for Events
